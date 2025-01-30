@@ -98,9 +98,73 @@ class Lexer:
             return self.make_number()
         if self.peek() in string.ascii_letters+"_.$:":
             return self.make_name()
-                
+
 class AInstruction:
-    pass
+    def __init__(self,value):
+        self.value = value
+
+class CInstruction:
+    def __init__(self):
+        pass
+
+
+class Parser:
+    def __init__(self,tokens):
+        self.ptr = 0
+        self.tokens = tokens
+
+    def remaining(self):
+        return self.tokens - self.ptr
+
+    def peek(self,dist):
+        if dist is None:
+            return None if self.is_empty() else self.tokens[self.ptr]
+        else:
+            return None if self.remaining() <= dist else self.tokens[self.ptr+dist]
+        
+    
+    def chop(self):
+        r = self.peek()
+        if r is not None:
+            self.ptr += 1
+        return r
+
+    def is_empty(self):
+        return self.remaining() <= 0
+
+    def is_not_empty(self):
+        return not self.is_empty()
+
+    def make_comp(self):
+        pass
+
+    def make_c_instruction(self):
+        t = self.chop()
+
+
+
+    def make_a_instruction(self):
+        self.chop()
+        v = self.chop()
+        if v.type != Token.NAME and v.type != Token.NUMBER:
+            print("Unexpected token",v)
+            return None
+        return AInstruction(v)
+
+    def next_instruction(self):
+        if self.is_empty():
+            return None
+        match self.peek():
+            case Token.AT:
+                return self.make_a_instruction()
+            case Token.NAME:
+                return self.make_c_instruction()
+            case _:
+                print("Unexpected token",self.peek())
+                return None
+        
+
+
 
 
 source = ""
