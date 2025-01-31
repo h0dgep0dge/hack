@@ -35,10 +35,5 @@ deref.create_variable_references()
 derefed = deref.dereference()
 
 for inst in derefed:
-    match inst.type:
-        case "A":
-            print(inst.value.line,"@",inst.value.value)
-        case "C":
-            print(inst.tokens[0].line,inst.dest["mne"],"=",inst.comp["mne"],";",inst.jump["mne"])
-        case "S":
-            print(inst.tokens[0].line,"(",inst.label,")")
+    #print(inst.gencode(),inst.tokens)
+    print(inst.gencode())

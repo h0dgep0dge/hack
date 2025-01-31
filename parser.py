@@ -6,6 +6,9 @@ class AInst:
         self.value = value
         self.tokens = tokens
 
+    def gencode(self):
+        return "0" + "{0:015b}".format(int(self.value.value))
+
 class CInst:
     DEST_NULL = {"binary":"000","mne":"NULL"}
     DEST_M =    {"binary":"001","mne":"M"}
@@ -60,6 +63,9 @@ class CInst:
         self.comp = comp
         self.jump = jump
         self.tokens = tokens
+    
+    def gencode(self):
+        return "111" + self.comp["binary"] + self.dest["binary"] + self.jump["binary"]
 
 class Label:
     def __init__(self,label,tokens):
@@ -197,7 +203,7 @@ class Parser:
         if self.peek().type != Token.NAME and self.peek().type != Token.NUMBER:
             raise Exception("Unexpected token",self.peek())
         left = self.chop()
-        if self.peek().type != Token.PLUS and self.peek().type != Token.MINUS and self.peek().type != Token.AMPER and self.peek().type != Token.PIPE:
+        if self.is_empty() or (self.peek().type != Token.PLUS and self.peek().type != Token.MINUS and self.peek().type != Token.AMPER and self.peek().type != Token.PIPE):
             match left.value:
                 case "A":
                     return CInst.COMP_A
@@ -259,7 +265,7 @@ class Parser:
         if comp == None:
             return None
 
-        if self.peek().type == Token.SEMICO:
+        if self.is_not_empty() and self.peek().type == Token.SEMICO:
             self.chop()
             if self.peek().type != Token.NAME:
                 raise Exception("Unexpected token",self.peek())

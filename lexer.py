@@ -23,6 +23,9 @@ class Token:
     
     def __str__(self):
         return self.names[self.type] + " " + self.value + " on line " + str(self.line)
+    
+    def __repr__(self):
+        return self.__str__()
 
 class Lexer:
 
