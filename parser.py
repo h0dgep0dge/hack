@@ -104,8 +104,18 @@ class Parser:
         op = self.chop()
         if self.peek().type != Token.NAME and self.peek().type != Token.NUMBER:
             raise Exception("Unexpected token",self.peek())
-        right = self.chop()
-        return CInst.COMP_NOTA
+        operand = self.chop()
+        match operand.value:
+            case "A":
+                return CInst.COMP_NOTA if op.type == Token.EXCLAM else CInst.COMP_NEGA
+            case "D":
+                return CInst.COMP_NOTD if op.type == Token.EXCLAM else CInst.COMP_NEGD
+            case "M":
+                return CInst.COMP_NOTM if op.type == Token.EXCLAM else CInst.COMP_NEGM
+            case "1":
+                if op.type != Token.MINUS:
+                    raise Exception("Invalid unary operand",op)
+                return CInst.COMP_NEGONE
 
     def make_plus(self,left,right):
         if right.value == "1":
@@ -115,7 +125,7 @@ class Parser:
                 case "M":
                     return CInst.COMP_MPLUSONE
                 case "D":
-                    return CInst.COMP_DPLUSA
+                    return CInst.COMP_DPLUSONE
                 case "_":
                     print("Invalid addition operand",left)
         if left.value != "D":
@@ -131,12 +141,11 @@ class Parser:
                 return None
 
     def make_minus(self,left,right):
-        print(left,"-",right)
         match left.value:
             case "A":
                 match right.value:
                     case "1":
-                        return CInst.COMP_AMINUS1
+                        return CInst.COMP_AMINUSONE
                     case "A":
                         return CInst.COMP_AMINUSA
                     case "M":
@@ -149,7 +158,7 @@ class Parser:
             case "M":
                 match right.value:
                     case "1":
-                        return CInst.COMP_MMINUS1
+                        return CInst.COMP_MMINUSONE
                     case "A":
                         return CInst.COMP_MMINUSA
                     case "M":
@@ -162,7 +171,7 @@ class Parser:
             case "D":
                 match right.value:
                     case "1":
-                        return CInst.COMP_DMINUS1
+                        return CInst.COMP_DMINUSONE
                     case "A":
                         return CInst.COMP_DMINUSA
                     case "M":

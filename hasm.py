@@ -1,9 +1,12 @@
 from lexer import Lexer
 from parser import Parser
 from dereferencer import Dereferencer
+from sys import argv
 
+if len(argv) < 2:
+    exit()
 source = ""
-with open("fib.asm") as f:
+with open(argv[1]) as f:
     for line in f:
         source += line
 
