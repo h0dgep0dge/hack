@@ -1,4 +1,4 @@
-@16 // test comment
+@16
 M=1
 @17
 M=1

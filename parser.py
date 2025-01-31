@@ -1,9 +1,10 @@
 from lexer import Token
 
 class AInst:
-    def __init__(self,value):
+    def __init__(self,value,tokens):
         self.type = "A"
         self.value = value
+        self.tokens = tokens
 
 class CInst:
     DEST_NULL = {"binary":"000","mne":"NULL"}
@@ -60,10 +61,11 @@ class CInst:
         self.jump = jump
         self.tokens = tokens
 
-class Symbol:
-    def __init__(self,label):
-        self.type = "S"
+class Label:
+    def __init__(self,label,tokens):
+        self.type = "L"
         self.label = label
+        self.tokens = tokens
 
 class Parser:
     def __init__(self,tokens):
@@ -95,8 +97,7 @@ class Parser:
     def make_unary(self):
         op = self.chop()
         if self.peek().type != Token.NAME and self.peek().type != Token.NUMBER:
-            print("Unexpected token",self.peek())
-            return None
+            raise Exception("Unexpected token",self.peek())
         right = self.chop()
         return CInst.COMP_NOTA
 
@@ -194,8 +195,7 @@ class Parser:
         if self.peek().type == Token.MINUS or self.peek().type == Token.EXCLAM:
             return self.make_unary()
         if self.peek().type != Token.NAME and self.peek().type != Token.NUMBER:
-            print("Unexpected token",self.peek())
-            return None
+            raise Exception("Unexpected token",self.peek())
         left = self.chop()
         if self.peek().type != Token.PLUS and self.peek().type != Token.MINUS and self.peek().type != Token.AMPER and self.peek().type != Token.PIPE:
             match left.value:
@@ -211,8 +211,7 @@ class Parser:
                     return CInst.COMP_ONE
         oper = self.chop()
         if self.peek().type != Token.NUMBER and self.peek().type != Token.NAME:
-            print("Unexpected token",self.peek())
-            return None
+            raise Exception("Unexpected token",self.peek())
         right = self.chop()
         match oper.type:
             case Token.PLUS:
@@ -233,8 +232,7 @@ class Parser:
         jump = None
         if self.peek(1).type == Token.EQUAL:
             if self.peek().type != Token.NAME:
-                print("Unexpected token",self.peek())
-                return None
+                raise Exception("Unexpected token",self.peek())
             match self.chop().value:
                 case "D":
                     dest = CInst.DEST_D
@@ -264,8 +262,7 @@ class Parser:
         if self.peek().type == Token.SEMICO:
             self.chop()
             if self.peek().type != Token.NAME:
-                print("Unexpected token",self.peek())
-                return None
+                raise Exception("Unexpected token",self.peek())
             match self.chop().value:
                 case "JGT":
                     jump = CInst.JUMP_JGT
@@ -288,15 +285,23 @@ class Parser:
         return CInst(dest,comp,jump,self.tokens[start:self.ptr])
 
     def make_a_instruction(self):
+        start = self.ptr
         self.chop()
         v = self.chop()
         if v.type != Token.NAME and v.type != Token.NUMBER:
-            print("Unexpected token",v)
-            return None
-        return AInst(v)
+            raise Exception("Unexpected token",v)
+        return AInst(v,self.tokens[start:self.ptr])
 
-    def make_symbol(self):
-        return None
+    def make_label(self):
+        start = self.ptr
+        self.chop()
+        if self.peek().type != Token.NAME:
+            raise Exception("Unexpected token",self.peek())
+        label = self.chop()
+        if self.peek().type != Token.RPAREN:
+            raise Exception("Unexpected token",self.peek())
+        self.chop()
+        return Label(label,self.tokens[start:self.ptr])
 
     def next_instruction(self):
         if self.is_empty():
@@ -305,6 +310,6 @@ class Parser:
             case Token.AT:
                 return self.make_a_instruction()
             case Token.LPAREN:
-                return self.make_symbol()
+                return self.make_label()
             case _:
                 return self.make_c_instruction()
