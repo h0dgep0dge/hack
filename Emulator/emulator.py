@@ -24,6 +24,8 @@ code = []
 
 with open(argv[1]) as f:
     for line in f:
+        if line[0] == "#":
+            continue
         code.append(line.strip())
 
 ROM = CodeMemory(code)
