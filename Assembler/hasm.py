@@ -5,6 +5,10 @@ from sys import argv
 
 if len(argv) < 2:
     exit()
+
+sourcefile = argv[1]
+binaryfile = argv[1]+".hack"
+
 source = ""
 with open(argv[1]) as f:
     for line in f:
@@ -37,6 +41,6 @@ deref.create_label_references()
 deref.create_variable_references()
 derefed = deref.dereference()
 
-for inst in derefed:
-    #print(inst.gencode(),inst.tokens)
-    print(inst.gencode())
+with open(binaryfile, "w") as binary:
+    for inst in derefed:
+        binary.write(inst.gencode()+"\n")
