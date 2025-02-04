@@ -107,12 +107,6 @@
 
     (LOOP$ISPRIME)
 
-    @counter$ISPRIME
-    D=M
-    @PRINT
-    M=D
-
-
     @test$ISPRIME
     D=M
     @R3
@@ -175,10 +169,6 @@
         A=M
         0;JMP
     (FALSE$ISPRIME)
-        @counter$ISPRIME
-        D=M
-        @PRINT
-        M=D
         @R1
         M=0
         @return$ISPRIME
@@ -187,24 +177,54 @@
 
 
 (MAIN)
-@19997
-D=A
-@R2
-M=D
 
-@MAIN$1
-D=A
-@R0
-M=D
+@counter$MAIN
+M=0
 
-@ISPRIME
+(MAINLOOP)
+
+    @1000
+    D=A
+    @counter$MAIN
+    D=D-M
+    @HALT
+    D;JLT
+
+    @counter$MAIN
+    M=M+1
+
+    @counter$MAIN
+    D=M
+    @R2
+    M=D
+
+    @MAIN$1
+    D=A
+    @R0
+    M=D
+
+    @ISPRIME
+    0;JMP
+
+    (MAIN$1)
+
+
+    @R1
+    D=M
+    @MAINLOOP
+    D;JEQ
+
+    @counter$MAIN
+    D=M
+    @PRINT
+    M=D
+
+    
+
+@MAINLOOP
 0;JMP
 
-(MAIN$1)
-@R1
-D=M
-@PRINT
-M=D
+
 
 @HALT
 0;JMP
