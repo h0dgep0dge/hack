@@ -19,7 +19,26 @@ M=M+1""".format(index=instr.index)
                 raise Exception("Segment not implemented",instr.segment)
     
     def gen_operation(self,instr):
-        raise Exception("Not implemented")
+        match instr.type:
+            case OperationTypes.ADD:
+                return """
+@SP
+M=M-1
+A=M
+D=M
+@SP
+M=M-1
+A=M
+A=M
+D=D+A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+"""
+            case _:
+                raise Exception("Not implemented")
 
     def gen(self,instr):
         if type(instr) is Push:

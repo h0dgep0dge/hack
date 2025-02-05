@@ -32,8 +32,10 @@ gen = VMCodeGen()
 
 print(
 """
+@100
+D=A
 @SP
-M=100
+M=D
 """)
 
 instr = parse.next_instruction()
@@ -41,3 +43,10 @@ while instr is not None:
     print(gen.gen(instr))
     instr = parse.next_instruction()
 
+print(
+"""
+(HALT)
+@HALT
+0;JMP
+"""
+)

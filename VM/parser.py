@@ -57,13 +57,15 @@ class VMParser:
         self.expect(TokenType.IDENT,chop=True)
         segment = self.expect(TokenType.IDENT,chop=True)
         index = self.expect(TokenType.NUMBER,chop=True)
-        self.expect(TokenType.NEWLINE,chop=True)
+        if self.is_not_empty():
+            self.expect(TokenType.NEWLINE,chop=True)
         return Push(segment.source,int(index.source),self.tokens[start:self.ptr])
 
     def chop_op(self,type):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
-        self.expect(TokenType.NEWLINE,chop=True)
+        if self.is_not_empty():
+            self.expect(TokenType.NEWLINE,chop=True)
         return Operation(type,self.tokens[start:self.ptr])
 
 
