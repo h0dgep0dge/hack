@@ -28,13 +28,18 @@ while token is not None:
 parse = VMParser(tokens)
 instructions = []
 
-gen = VMCodeGen()
+gen = VMCodeGen(sourcefile)
 
 print(
 """
-@100
+@256
 D=A
 @SP
+M=D
+
+@1017
+D=A
+@LCL
 M=D
 """)
 
