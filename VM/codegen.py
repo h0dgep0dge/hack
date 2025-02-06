@@ -50,9 +50,9 @@ class VMCodeGen:
     def gen_comparison(self,jump):
         trueLabel = self.new_label()
         falseLabel = self.new_label()
-        continueLabel = self.new_label()
+        contLabel = self.new_label()
 
-        return VMCodeGen.POPTOD + VMCodeGen.POINT + " D=M-D\n @{true} \n D;{jump} \n @{false} \n 0;JMP \n ({true}) \n @SP \n A=M \n M=0 \n M=!M \n @{cont} \n 0;JMP \n ({false}) \n @SP \n A=M \n M=0 \n ({cont}) \n".format(true=trueLabel,false=falseLabel,cont=continueLabel,jump=jump) + VMCodeGen.INCREMENT
+        return VMCodeGen.POPTOD + VMCodeGen.POINT + f" D=M-D\n @{trueLabel} \n D;{jump} \n @{falseLabel} \n 0;JMP \n ({trueLabel}) \n @SP \n A=M \n M=0 \n M=!M \n @{contLabel} \n 0;JMP \n ({falseLabel}) \n @SP \n A=M \n M=0 \n ({contLabel}) \n" + VMCodeGen.INCREMENT
 
     def gen_operation(self,instr):
         match instr.type:
