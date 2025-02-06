@@ -1,14 +1,21 @@
 from lexer import TokenType
 from enum import Enum
 
-class Push:
+
+
+class PushPop:
     def __init__(self,segment,index,tokens):
         self.segment = segment
         self.index = index
         self.tokens = tokens
-    
+
+class Push(PushPop):
     def __repr__(self):
         return "Push( \"" + self.segment + "\" , " + str(self.index) + " )"
+
+class Pop(PushPop):
+    def __repr__(self):
+        return "Pop( \"" + self.segment + "\" , " + str(self.index) + " )"
 
 class OperationTypes(Enum):
     ADD = 0
@@ -61,6 +68,15 @@ class VMParser:
             self.expect(TokenType.NEWLINE,chop=True)
         return Push(segment.source,int(index.source),self.tokens[start:self.ptr])
 
+    def chop_pop(self):
+        start = self.ptr
+        self.expect(TokenType.IDENT,chop=True)
+        segment = self.expect(TokenType.IDENT,chop=True)
+        index = self.expect(TokenType.NUMBER,chop=True)
+        if self.is_not_empty():
+            self.expect(TokenType.NEWLINE,chop=True)
+        return Pop(segment.source,int(index.source),self.tokens[start:self.ptr])
+
     def chop_op(self,type):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
@@ -90,6 +106,8 @@ class VMParser:
         match self.expect(TokenType.IDENT).source:
             case "push":
                 return self.chop_push()
+            case "pop":
+                return self.chop_pop()
             case "add":
                 return self.chop_op(OperationTypes.ADD)
             case "sub":
