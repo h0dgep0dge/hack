@@ -81,8 +81,6 @@ class VMParser:
         self.expect(TokenType.IDENT,chop=True)
         segment = self.expect(TokenType.IDENT,chop=True)
         index = self.expect(TokenType.NUMBER,chop=True)
-        if self.is_not_empty():
-            self.expect(TokenType.NEWLINE,chop=True)
         return Push(segment.source,int(index.source),self.tokens[start:self.ptr])
 
     def chop_pop(self):
@@ -90,32 +88,24 @@ class VMParser:
         self.expect(TokenType.IDENT,chop=True)
         segment = self.expect(TokenType.IDENT,chop=True)
         index = self.expect(TokenType.NUMBER,chop=True)
-        if self.is_not_empty():
-            self.expect(TokenType.NEWLINE,chop=True)
         return Pop(segment.source,int(index.source),self.tokens[start:self.ptr])
 
     def chop_label(self):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
         label = self.expect(TokenType.IDENT,chop=True)
-        if self.is_not_empty():
-            self.expect(TokenType.NEWLINE,chop=True)
         return Label(label.source,self.tokens[start:self.ptr])
 
     def chop_goto(self,cond=False):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
         label = self.expect(TokenType.IDENT,chop=True)
-        if self.is_not_empty():
-            self.expect(TokenType.NEWLINE,chop=True)
         return Goto(label.source,cond,self.tokens[start:self.ptr])
 
 
     def chop_op(self,type):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
-        if self.is_not_empty():
-            self.expect(TokenType.NEWLINE,chop=True)
         return Operation(type,self.tokens[start:self.ptr])
 
 
@@ -139,32 +129,36 @@ class VMParser:
         
         match self.expect(TokenType.IDENT).source:
             case "push":
-                return self.chop_push()
+                r = self.chop_push()
             case "pop":
-                return self.chop_pop()
+                r = self.chop_pop()
             case "label":
-                return self.chop_label()
+                r = self.chop_label()
             case "goto":
-                return self.chop_goto()
+                r = self.chop_goto()
             case "if-goto":
-                return self.chop_goto(cond=True)
+                r = self.chop_goto(cond=True)
             case "add":
-                return self.chop_op(OperationTypes.ADD)
+                r = self.chop_op(OperationTypes.ADD)
             case "sub":
-                return self.chop_op(OperationTypes.SUB)
+                r = self.chop_op(OperationTypes.SUB)
             case "neg":
-                return self.chop_op(OperationTypes.NEG)
+                r = self.chop_op(OperationTypes.NEG)
             case "eq":
-                return self.chop_op(OperationTypes.EQ)
+                r = self.chop_op(OperationTypes.EQ)
             case "gt":
-                return self.chop_op(OperationTypes.GT)
+                r = self.chop_op(OperationTypes.GT)
             case "lt":
-                return self.chop_op(OperationTypes.LT)
+                r = self.chop_op(OperationTypes.LT)
             case "and":
-                return self.chop_op(OperationTypes.AND)
+                r = self.chop_op(OperationTypes.AND)
             case "or":
-                return self.chop_op(OperationTypes.OR)
+                r = self.chop_op(OperationTypes.OR)
             case "not":
-                return self.chop_op(OperationTypes.NOT)
+                r = self.chop_op(OperationTypes.NOT)
             case _:
                 raise Exception("Unexpected token",self.tokens[self.ptr])
+        
+        if self.is_not_empty():
+            self.expect(TokenType.NEWLINE,chop=True)
+        return r
