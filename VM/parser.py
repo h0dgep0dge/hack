@@ -1,40 +1,7 @@
 from lexer import TokenType
 from enum import Enum
 
-
-
-class PushPop:
-    def __init__(self,segment,index,tokens):
-        self.segment = segment
-        self.index = index
-        self.tokens = tokens
-
-class Push(PushPop):
-    def __repr__(self):
-        return "Push( \"" + self.segment + "\" , " + str(self.index) + " )"
-
-class Pop(PushPop):
-    def __repr__(self):
-        return "Pop( \"" + self.segment + "\" , " + str(self.index) + " )"
-
-class Label:
-    def __init__(self,label,tokens):
-        self.label = label
-        self.tokens = tokens
-
-    def __repr__(self):
-        return "Label( " + self.label + " )"
-
-class Goto:
-    def __init__(self,label,cond,tokens):
-        self.label = label
-        self.tokens = tokens
-        self.cond = cond
-    
-    def __repr__(self):
-        return "Goto( " + self.label + " , cond=" + str(self.cond) + " )"
-
-class OperationTypes(Enum):
+class ArithType(Enum):
     ADD = 0
     SUB = 1
     NEG = 2
@@ -45,14 +12,24 @@ class OperationTypes(Enum):
     OR = 7
     NOT = 8
 
-class Operation:
-    def __init__(self,type,tokens):
+class VMInstructionType(Enum):
+    POP = 0 # arg1=segment arg2=index
+    PUSH = 1 # arg1=segment arg2=index
+    GOTO = 2 # arg1=label
+    IFGOTO = 3 # arg1=label
+    LABEL = 4 # arg1=label
+    ARITH = 5 # arg1=ArithType
+
+class VMInstruction:
+    def __init__(self,type,arg1,arg2,tokens):
         self.type = type
+        self.arg1 = arg1
+        self.arg2 = arg2
         self.tokens = tokens
     
     def __repr__(self):
-        return "Operation( " + self.type.name + " )"
-
+        #return f"VMInstruction( {self.type.name} , {repr(self.arg1)} , {repr(self.arg2)} , {self.tokens} )"
+        return f"VMInstruction( {self.type.name} , {repr(self.arg1)} , {repr(self.arg2)} )"
 
 class VMParser:
     def __init__(self,tokens):
@@ -81,32 +58,38 @@ class VMParser:
         self.expect(TokenType.IDENT,chop=True)
         segment = self.expect(TokenType.IDENT,chop=True)
         index = self.expect(TokenType.NUMBER,chop=True)
-        return Push(segment.source,int(index.source),self.tokens[start:self.ptr])
+        return VMInstruction(VMInstructionType.PUSH,segment.source,int(index.source),self.tokens[start:self.ptr])
 
     def chop_pop(self):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
         segment = self.expect(TokenType.IDENT,chop=True)
         index = self.expect(TokenType.NUMBER,chop=True)
-        return Pop(segment.source,int(index.source),self.tokens[start:self.ptr])
+        return VMInstruction(VMInstructionType.POP,segment.source,int(index.source),self.tokens[start:self.ptr])
 
     def chop_label(self):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
         label = self.expect(TokenType.IDENT,chop=True)
-        return Label(label.source,self.tokens[start:self.ptr])
+        return VMInstruction(VMInstructionType.LABEL,label.source,None,self.tokens[start:self.ptr])
 
-    def chop_goto(self,cond=False):
+    def chop_goto(self):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
         label = self.expect(TokenType.IDENT,chop=True)
-        return Goto(label.source,cond,self.tokens[start:self.ptr])
+        return VMInstruction(VMInstructionType.GOTO,label.source,None,self.tokens[start:self.ptr])
 
-
-    def chop_op(self,type):
+    def chop_ifgoto(self):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
-        return Operation(type,self.tokens[start:self.ptr])
+        label = self.expect(TokenType.IDENT,chop=True)
+        return VMInstruction(VMInstructionType.IFGOTO,label.source,None,self.tokens[start:self.ptr])
+
+
+    def chop_arith(self,type):
+        start = self.ptr
+        self.expect(TokenType.IDENT,chop=True)
+        return VMInstruction(VMInstructionType.ARITH,type,None,self.tokens[start:self.ptr])
 
 
     def expect(self,tokentype,chop=False):
@@ -137,25 +120,25 @@ class VMParser:
             case "goto":
                 r = self.chop_goto()
             case "if-goto":
-                r = self.chop_goto(cond=True)
+                r = self.chop_ifgoto()
             case "add":
-                r = self.chop_op(OperationTypes.ADD)
+                r = self.chop_arith(ArithType.ADD)
             case "sub":
-                r = self.chop_op(OperationTypes.SUB)
+                r = self.chop_arith(ArithType.SUB)
             case "neg":
-                r = self.chop_op(OperationTypes.NEG)
+                r = self.chop_arith(ArithType.NEG)
             case "eq":
-                r = self.chop_op(OperationTypes.EQ)
+                r = self.chop_arith(ArithType.EQ)
             case "gt":
-                r = self.chop_op(OperationTypes.GT)
+                r = self.chop_arith(ArithType.GT)
             case "lt":
-                r = self.chop_op(OperationTypes.LT)
+                r = self.chop_arith(ArithType.LT)
             case "and":
-                r = self.chop_op(OperationTypes.AND)
+                r = self.chop_arith(ArithType.AND)
             case "or":
-                r = self.chop_op(OperationTypes.OR)
+                r = self.chop_arith(ArithType.OR)
             case "not":
-                r = self.chop_op(OperationTypes.NOT)
+                r = self.chop_arith(ArithType.NOT)
             case _:
                 raise Exception("Unexpected token",self.tokens[self.ptr])
         

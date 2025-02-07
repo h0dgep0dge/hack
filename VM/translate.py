@@ -45,6 +45,7 @@ M=D
 
 instr = parse.next_instruction()
 while instr is not None:
+    print("//",instr)
     print(gen.gen(instr))
     #print(instr)
     instr = parse.next_instruction()

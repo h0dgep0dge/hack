@@ -1,12 +1,12 @@
-from parser import OperationTypes,Operation,Push,Pop,Label,Goto
+from parser import ArithType,VMInstructionType
 
 class VMCodeGen:
     POPTOD = "@SP\nM=M-1\nA=M\nD=M\n"
     POINT = "@SP\nM=M-1\nA=M\n"
     INCREMENT = "@SP\nM=M+1\n"
     DECREMENT = "@SP\nM=M-1\n"
-
     PUSHD = "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
+
     def __init__(self,filename):
         self.filename = filename
         self.labelCounter = 0
@@ -37,53 +37,54 @@ class VMCodeGen:
         return VMCodeGen.POPTOD + f"@{self.filename}.{str(index)} \n M=D \n"
     
 
-    def gen_push(self,instr):
-        match instr.segment:
+    def gen_push(self,instr): # PUSH = 1 arg1=segment arg2=index
+        match instr.arg1:
             case "constant":
-                return self.gen_constant_push(instr.index)
+                return self.gen_constant_push(instr.arg2)
             case "local":
-                return self.gen_relative_push("LCL",instr.index)
+                return self.gen_relative_push("LCL",instr.arg2)
             case "argument":
-                return self.gen_relative_push("ARG",instr.index)
+                return self.gen_relative_push("ARG",instr.arg2)
             case "this":
-                return self.gen_relative_push("THIS",instr.index)
+                return self.gen_relative_push("THIS",instr.arg2)
             case "that":
-                return self.gen_relative_push("THAT",instr.index)
+                return self.gen_relative_push("THAT",instr.arg2)
             case "pointer":
-                return self.gen_absolute_push(3+instr.index)
+                return self.gen_absolute_push(3+instr.arg2)
             case "temp":
-                return self.gen_absolute_push(5+instr.index)
+                return self.gen_absolute_push(5+instr.arg2)
             case "static":
-                return self.gen_static_push(instr.index)
+                return self.gen_static_push(instr.arg2)
             case _:
-                raise Exception("Segment not implemented",instr.segment)
+                raise Exception("Segment not implemented",instr.arg2)
     
-    def gen_pop(self,instr):
-        match instr.segment:
+    def gen_pop(self,instr): # POP = 0 arg1=segment arg2=index
+        match instr.arg1:
             case "local":
-                return self.gen_relative_pop("LCL",instr.index)
+                return self.gen_relative_pop("LCL",instr.arg2)
             case "argument":
-                return self.gen_relative_pop("ARG",instr.index)
+                return self.gen_relative_pop("ARG",instr.arg2)
             case "this":
-                return self.gen_relative_pop("THIS",instr.index)
+                return self.gen_relative_pop("THIS",instr.arg2)
             case "that":
-                return self.gen_relative_pop("THAT",instr.index)
+                return self.gen_relative_pop("THAT",instr.arg2)
             case "pointer":
-                return self.gen_absolute_pop(3+instr.index)
+                return self.gen_absolute_pop(3+instr.arg2)
             case "temp":
-                return self.gen_absolute_pop(5+instr.index)
+                return self.gen_absolute_pop(5+instr.arg2)
             case "static":
-                return self.gen_static_pop(instr.index)
+                return self.gen_static_pop(instr.arg2)
             case _:
-                raise Exception("Segment not implemented",instr.segment)
+                raise Exception("Segment not implemented",instr.arg2)
     
-    def gen_label(self,instr):
-        return f"({self.filename}.{instr.label})\n"
+    def gen_label(self,instr): # LABEL = 4 arg1=label
+        return f"({self.filename}.{instr.arg1})\n"
     
-    def gen_goto(self,instr):
-        if instr.cond:
-            return VMCodeGen.POPTOD + f"@{self.filename}.{instr.label} \n D;JNE \n"
-        return f"@{self.filename}.{instr.label} \n 0;JMP \n"
+    def gen_goto(self,instr): # GOTO = 2 arg1=label
+        return f"@{self.filename}.{instr.arg1} \n 0;JMP \n"
+    
+    def gen_ifgoto(self,instr): # IFGOTO = 3 arg1=label
+        return VMCodeGen.POPTOD + f"@{self.filename}.{instr.arg1} \n D;JNE \n"
 
     def gen_comparison(self,jump):
         trueLabel = self.new_label()
@@ -92,37 +93,40 @@ class VMCodeGen:
 
         return VMCodeGen.POPTOD + VMCodeGen.POINT + f" D=M-D\n @{trueLabel} \n D;{jump} \n @{falseLabel} \n 0;JMP \n ({trueLabel}) \n @SP \n A=M \n M=0 \n M=!M \n @{contLabel} \n 0;JMP \n ({falseLabel}) \n @SP \n A=M \n M=0 \n ({contLabel}) \n" + VMCodeGen.INCREMENT
 
-    def gen_operation(self,instr):
-        match instr.type:
-            case OperationTypes.ADD:
+    def gen_arith(self,instr): # ARITH = 5 arg1=ArithType
+        match instr.arg1:
+            case ArithType.ADD:
                 return VMCodeGen.POPTOD + VMCodeGen.POINT + "M=D+M\n" + VMCodeGen.INCREMENT
-            case OperationTypes.SUB:
+            case ArithType.SUB:
                 return VMCodeGen.POPTOD + VMCodeGen.POINT + "M=M-D\n" + VMCodeGen.INCREMENT
-            case OperationTypes.AND:
+            case ArithType.AND:
                 return VMCodeGen.POPTOD + VMCodeGen.POINT + "M=D&M\n" + VMCodeGen.INCREMENT
-            case OperationTypes.OR:
+            case ArithType.OR:
                 return VMCodeGen.POPTOD + VMCodeGen.POINT + "M=D|M\n" + VMCodeGen.INCREMENT
-            case OperationTypes.NEG:
+            case ArithType.NEG:
                 return VMCodeGen.POINT + "M=-M\n" + VMCodeGen.INCREMENT
-            case OperationTypes.NOT:
+            case ArithType.NOT:
                 return VMCodeGen.POINT + "M=!M\n" + VMCodeGen.INCREMENT
-            case OperationTypes.EQ:
+            case ArithType.EQ:
                 return self.gen_comparison("JEQ")
-            case OperationTypes.GT:
+            case ArithType.GT:
                 return self.gen_comparison("JGT")
-            case OperationTypes.LT:
+            case ArithType.LT:
                 return self.gen_comparison("JLT")
             case _:
-                raise Exception("Not implemented")
+                raise Exception("Unknown ArithType",instr.arg1)
 
     def gen(self,instr):
-        if type(instr) is Push:
-            return self.gen_push(instr)
-        elif type(instr) is Pop:
-            return self.gen_pop(instr)
-        elif type(instr) is Goto:
-            return self.gen_goto(instr)
-        elif type(instr) is Label:
-            return self.gen_label(instr)
-        elif type(instr) is Operation:
-            return self.gen_operation(instr)
+        match instr.type:
+            case VMInstructionType.PUSH:
+                return self.gen_push(instr)
+            case VMInstructionType.POP:
+                return self.gen_pop(instr)
+            case VMInstructionType.LABEL:
+                return self.gen_label(instr)
+            case VMInstructionType.GOTO:
+                return self.gen_goto(instr)
+            case VMInstructionType.IFGOTO:
+                return self.gen_ifgoto(instr)
+            case VMInstructionType.ARITH:
+                return self.gen_arith(instr)
