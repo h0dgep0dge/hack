@@ -1,4 +1,4 @@
-from parser import OperationTypes,Operation,Push,Pop
+from parser import OperationTypes,Operation,Push,Pop,Label,Goto
 
 class VMCodeGen:
     POPTOD = "@SP\nM=M-1\nA=M\nD=M\n"
@@ -25,7 +25,7 @@ class VMCodeGen:
         return f"@{addr} \n D=M \n" + VMCodeGen.PUSHD
     
     def gen_static_push(self,index):
-        return f"@{self.filename+"."+str(index)} \n D=M \n" + VMCodeGen.PUSHD
+        return f"@{self.filename}.{str(index)} \n D=M \n" + VMCodeGen.PUSHD
 
     def gen_relative_pop(self,segment,index):
         return f"@{segment} \n D=M \n @{index} \n D=D+A \n @13 \n M=D \n" + VMCodeGen.POPTOD + "@13 \n A=M \n M=D \n"
@@ -34,7 +34,7 @@ class VMCodeGen:
         return VMCodeGen.POPTOD + f"@{addr} \n M=D \n"
     
     def gen_static_pop(self,index):
-        return VMCodeGen.POPTOD + f"@{self.filename+"."+str(index)} \n M=D \n"
+        return VMCodeGen.POPTOD + f"@{self.filename}.{str(index)} \n M=D \n"
     
 
     def gen_push(self,instr):
@@ -77,6 +77,14 @@ class VMCodeGen:
             case _:
                 raise Exception("Segment not implemented",instr.segment)
     
+    def gen_label(self,instr):
+        return f"({self.filename}.{instr.label})\n"
+    
+    def gen_goto(self,instr):
+        if instr.cond:
+            return VMCodeGen.POPTOD + f"@{self.filename}.{instr.label} \n D;JNE \n"
+        return f"@{self.filename}.{instr.label} \n 0;JMP \n"
+
     def gen_comparison(self,jump):
         trueLabel = self.new_label()
         falseLabel = self.new_label()
@@ -110,7 +118,11 @@ class VMCodeGen:
     def gen(self,instr):
         if type(instr) is Push:
             return self.gen_push(instr)
-        if type(instr) is Pop:
+        elif type(instr) is Pop:
             return self.gen_pop(instr)
-        if type(instr) is Operation:
+        elif type(instr) is Goto:
+            return self.gen_goto(instr)
+        elif type(instr) is Label:
+            return self.gen_label(instr)
+        elif type(instr) is Operation:
             return self.gen_operation(instr)

@@ -51,7 +51,7 @@ class VMLexer:
 
     def chop_ident(self):
         start = self.ptr
-        while self.is_not_empty() and self.peek() in string.ascii_letters:
+        while self.is_not_empty() and self.peek() in (string.ascii_letters + string.digits + "_.$:-"):
             self.chop()
         return Token(TokenType.IDENT,self.source[start:self.ptr],self.line)
 

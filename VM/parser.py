@@ -17,6 +17,23 @@ class Pop(PushPop):
     def __repr__(self):
         return "Pop( \"" + self.segment + "\" , " + str(self.index) + " )"
 
+class Label:
+    def __init__(self,label,tokens):
+        self.label = label
+        self.tokens = tokens
+
+    def __repr__(self):
+        return "Label( " + self.label + " )"
+
+class Goto:
+    def __init__(self,label,cond,tokens):
+        self.label = label
+        self.tokens = tokens
+        self.cond = cond
+    
+    def __repr__(self):
+        return "Goto( " + self.label + " , cond=" + str(self.cond) + " )"
+
 class OperationTypes(Enum):
     ADD = 0
     SUB = 1
@@ -77,6 +94,23 @@ class VMParser:
             self.expect(TokenType.NEWLINE,chop=True)
         return Pop(segment.source,int(index.source),self.tokens[start:self.ptr])
 
+    def chop_label(self):
+        start = self.ptr
+        self.expect(TokenType.IDENT,chop=True)
+        label = self.expect(TokenType.IDENT,chop=True)
+        if self.is_not_empty():
+            self.expect(TokenType.NEWLINE,chop=True)
+        return Label(label.source,self.tokens[start:self.ptr])
+
+    def chop_goto(self,cond=False):
+        start = self.ptr
+        self.expect(TokenType.IDENT,chop=True)
+        label = self.expect(TokenType.IDENT,chop=True)
+        if self.is_not_empty():
+            self.expect(TokenType.NEWLINE,chop=True)
+        return Goto(label.source,cond,self.tokens[start:self.ptr])
+
+
     def chop_op(self,type):
         start = self.ptr
         self.expect(TokenType.IDENT,chop=True)
@@ -108,6 +142,12 @@ class VMParser:
                 return self.chop_push()
             case "pop":
                 return self.chop_pop()
+            case "label":
+                return self.chop_label()
+            case "goto":
+                return self.chop_goto()
+            case "if-goto":
+                return self.chop_goto(cond=True)
             case "add":
                 return self.chop_op(OperationTypes.ADD)
             case "sub":
@@ -126,3 +166,5 @@ class VMParser:
                 return self.chop_op(OperationTypes.OR)
             case "not":
                 return self.chop_op(OperationTypes.NOT)
+            case _:
+                raise Exception("Unexpected token",self.tokens[self.ptr])
