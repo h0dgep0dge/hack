@@ -19,6 +19,9 @@ class VMInstructionType(Enum):
     IFGOTO = 3 # arg1=label
     LABEL = 4 # arg1=label
     ARITH = 5 # arg1=ArithType
+    FUNC = 6 # arg1=name arg2=argc
+    CALL = 7 # arg1=name arg2=argc
+    RETURN = 8 # no arguments
 
 class VMInstruction:
     def __init__(self,type,arg1,arg2,tokens):
@@ -66,6 +69,25 @@ class VMParser:
         segment = self.expect(TokenType.IDENT,chop=True)
         index = self.expect(TokenType.NUMBER,chop=True)
         return VMInstruction(VMInstructionType.POP,segment.source,int(index.source),self.tokens[start:self.ptr])
+
+    def chop_func(self):
+        start = self.ptr
+        self.expect(TokenType.IDENT,chop=True)
+        name = self.expect(TokenType.IDENT,chop=True)
+        argc = self.expect(TokenType.NUMBER,chop=True)
+        return VMInstruction(VMInstructionType.FUNC,name.source,int(argc.source),self.tokens[start:self.ptr])
+
+    def chop_call(self):
+        start = self.ptr
+        self.expect(TokenType.IDENT,chop=True)
+        name = self.expect(TokenType.IDENT,chop=True)
+        argc = self.expect(TokenType.NUMBER,chop=True)
+        return VMInstruction(VMInstructionType.CALL,name.source,int(argc.source),self.tokens[start:self.ptr])
+
+    def chop_return(self):
+        start = self.ptr
+        self.expect(TokenType.IDENT,chop=True)
+        return VMInstruction(VMInstructionType.RETURN,None,None,self.tokens[start:self.ptr])
 
     def chop_label(self):
         start = self.ptr
@@ -121,6 +143,12 @@ class VMParser:
                 r = self.chop_goto()
             case "if-goto":
                 r = self.chop_ifgoto()
+            case "function":
+                r = self.chop_func()
+            case "call":
+                r = self.chop_call()
+            case "return":
+                r = self.chop_return()
             case "add":
                 r = self.chop_arith(ArithType.ADD)
             case "sub":

@@ -1,7 +1,16 @@
 from lexer import VMLexer
-from parser import VMParser
+from parser import VMParser,VMInstruction,VMInstructionType
 from codegen import VMCodeGen
 import sys
+
+class InstrList(list):
+    def __repr__(self):
+        r = ""
+        newline = ""
+        for item in self:
+            r += newline + repr(item)
+            newline = "\n"
+        return r
 
 if len(sys.argv) <= 1:
     print("No input file")
@@ -16,6 +25,7 @@ try:
             source += line
 except FileNotFoundError:
     print("Source file not found",sourcefile)
+    exit()
 
 lex = VMLexer(source)
 tokens = []
@@ -26,9 +36,18 @@ while token is not None:
     token = lex.next_token()
 
 parse = VMParser(tokens)
-instructions = []
 
-gen = VMCodeGen(sourcefile)
+instructions = InstrList([VMInstruction(VMInstructionType.CALL,"Main.main",0,None),VMInstruction(VMInstructionType.LABEL,"HALT",None,None),VMInstruction(VMInstructionType.GOTO,"HALT",None,None)])
+#instructions = InstrList()
+instr = parse.next_instruction()
+while instr is not None:
+    instructions.append(instr)
+    instr = parse.next_instruction()
+
+#print(instructions)
+#exit()
+
+gen = VMCodeGen(sourcefile,instructions)
 
 print(
 """
@@ -37,23 +56,8 @@ D=A
 @SP
 M=D
 
-@1017
-D=A
-@LCL
-M=D
-""")
 
-instr = parse.next_instruction()
-while instr is not None:
+""")
+for instr in instructions:
     print("//",instr)
     print(gen.gen(instr))
-    #print(instr)
-    instr = parse.next_instruction()
-
-print(
-"""
-(HALT)
-@HALT
-0;JMP
-"""
-)

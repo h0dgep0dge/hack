@@ -6,20 +6,33 @@ class VMCodeGen:
     INCREMENT = "@SP\nM=M+1\n"
     DECREMENT = "@SP\nM=M-1\n"
     PUSHD = "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
+    PUSHA = "D=A\n" + PUSHD
+    PUSHM = "D=M\n" + PUSHD
 
-    def __init__(self,filename):
+    def __init__(self,filename,instructions):
         self.filename = filename
+        self.instructions = instructions
         self.labelCounter = 0
 
+    def gen_function(self,instr): # FUNC = 6 arg1=name arg2=localc
+        return f"({instr.arg1}) \n @0 \n D=A \n" + VMCodeGen.PUSHD * instr.arg2
+
+    def gen_return(self,instr): # RETURN = 8 no arguments
+        return f"{VMCodeGen.POPTOD} \n @13 \n M=D \n @ARG \n D=M \n @14 \n M=D \n @LCL \n D=M \n @SP \n M=D \n {VMCodeGen.POPTOD} \n @THAT \n M=D \n {VMCodeGen.POPTOD} \n @THIS \n M=D \n {VMCodeGen.POPTOD} \n @ARG \n M=D \n {VMCodeGen.POPTOD} \n @LCL \n M=D \n {VMCodeGen.POPTOD} \n @15 \n M=D \n @14 \n D=M \n @SP \n M=D \n @13 \n D=M \n {VMCodeGen.PUSHD} \n @15 \n A=M \n 0;JMP \n"
+
+    def gen_call(self,instr): # CALL = 7 arg1=name arg2=argc
+        label = self.new_label()
+        return f"@{label} \n D=A \n {VMCodeGen.PUSHD} \n @LCL \n {VMCodeGen.PUSHM} \n @ARG \n {VMCodeGen.PUSHM} \n @THIS \n {VMCodeGen.PUSHM} \n @THAT \n {VMCodeGen.PUSHM} \n @{instr.arg2 + 5} \n D=A \n @SP \n D=M-D \n @ARG \n M=D \n @SP \n D=M \n @LCL \n M=D \n @{instr.arg1} \n 0;JMP \n ({label}) \n"
+    
     def new_label(self):
         self.labelCounter += 1
-        return "VM$" + str(self.labelCounter)
+        return f"{self.filename}.VM$" + str(self.labelCounter)
 
     def gen_constant_push(self,value):
         return f"@{value} \n D=A \n" + VMCodeGen.PUSHD
 
     def gen_relative_push(self,segment,index):
-        return f"@{segment} \n D=M \n @{index} \n A=D+A \n D=M \n" + VMCodeGen.PUSHD
+        return f"@{segment}  \n D=M \n @{index} \n A=D+A \n D=M \n" + VMCodeGen.PUSHD
 
     def gen_absolute_push(self,addr):
         return f"@{addr} \n D=M \n" + VMCodeGen.PUSHD
@@ -56,7 +69,7 @@ class VMCodeGen:
             case "static":
                 return self.gen_static_push(instr.arg2)
             case _:
-                raise Exception("Segment not implemented",instr.arg2)
+                raise Exception("Segment not implemented",instr.arg1)
     
     def gen_pop(self,instr): # POP = 0 arg1=segment arg2=index
         match instr.arg1:
@@ -75,7 +88,7 @@ class VMCodeGen:
             case "static":
                 return self.gen_static_pop(instr.arg2)
             case _:
-                raise Exception("Segment not implemented",instr.arg2)
+                raise Exception("Segment not implemented",instr.arg1)
     
     def gen_label(self,instr): # LABEL = 4 arg1=label
         return f"({self.filename}.{instr.arg1})\n"
@@ -130,3 +143,11 @@ class VMCodeGen:
                 return self.gen_ifgoto(instr)
             case VMInstructionType.ARITH:
                 return self.gen_arith(instr)
+            case VMInstructionType.FUNC:
+                return self.gen_function(instr)
+            case VMInstructionType.RETURN:
+                return self.gen_return(instr)
+            case VMInstructionType.CALL:
+                return self.gen_call(instr)
+            case _:
+                raise Exception("Instruction not implemented",instr)
