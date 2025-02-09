@@ -9,9 +9,8 @@ class VMCodeGen:
     PUSHA = "D=A\n" + PUSHD
     PUSHM = "D=M\n" + PUSHD
 
-    def __init__(self,filename,instructions):
+    def __init__(self,filename):
         self.filename = filename
-        self.instructions = instructions
 
         self.labelCounter = 0
         self.currentFunction = "default"
@@ -28,11 +27,11 @@ class VMCodeGen:
     
     def new_label(self):
         self.labelCounter += 1
-        return f"{self.filename}.{self.currentFunction}$" + str(self.labelCounter)
+        return f"{self.currentFunction}$" + str(self.labelCounter)
     
     def new_return_label(self):
         self.labelCounter += 1
-        return f"{self.filename}.{self.currentFunction}$ret.{self.labelCounter}"
+        return f"{self.currentFunction}$ret.{self.labelCounter}"
 
     def gen_constant_push(self,value):
         return f"@{value} \n D=A \n" + VMCodeGen.PUSHD
@@ -96,10 +95,10 @@ class VMCodeGen:
                 raise Exception("Segment not implemented",instr.arg1)
     
     def gen_label(self,instr): # LABEL = 4 arg1=label
-        return f"({self.filename}.{self.currentFunction}${instr.arg1})\n"
+        return f"({self.currentFunction}${instr.arg1})\n"
     
     def gen_goto(self,instr): # GOTO = 2 arg1=label
-        return f"@{self.filename}.{self.currentFunction}${instr.arg1} \n 0;JMP \n"
+        return f"@{self.currentFunction}${instr.arg1} \n 0;JMP \n"
     
     def gen_ifgoto(self,instr): # IFGOTO = 3 arg1=label
         return VMCodeGen.POPTOD + f"@{self.filename}.{instr.arg1} \n D;JNE \n"

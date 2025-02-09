@@ -34,6 +34,15 @@ class VMInstruction:
         #return f"VMInstruction( {self.type.name} , {repr(self.arg1)} , {repr(self.arg2)} , {self.tokens} )"
         return f"VMInstruction( {self.type.name} , {repr(self.arg1)} , {repr(self.arg2)} )"
 
+class InstrList(list):
+    def __repr__(self):
+        r = ""
+        newline = ""
+        for item in self:
+            r += newline + repr(item)
+            newline = "\n"
+        return r
+
 class VMParser:
     def __init__(self,tokens):
         self.tokens = tokens

@@ -1,64 +1,76 @@
 from lexer import VMLexer
-from parser import VMParser,VMInstruction,VMInstructionType
+from parser import VMParser
 from codegen import VMCodeGen
-import sys
+from glob import glob
+from sys import argv
+import os
 
-class InstrList(list):
-    def __repr__(self):
-        r = ""
-        newline = ""
-        for item in self:
-            r += newline + repr(item)
-            newline = "\n"
-        return r
+class Translator:
+    def __init__(self,filepath):
+        self.filepath = filepath
 
-if len(sys.argv) <= 1:
-    print("No input file")
-    exit()
+        self.basename = os.path.basename(filepath)
+        self.filename = ".".join(self.basename.split(".")[:-1])
 
-sourcefile = sys.argv[1]
-filename = ".".join(sourcefile.split(".")[:-1])
-source = ""
+        self.read()
+        self.lex()
+        self.parse()
+        self.gen()
+    
+    def read(self):
+        self.source = ""
+        with open(self.filepath) as f:
+            for line in f:
+                self.source += line
+    
+    def lex(self):
+        self.tokens = []
+        lex = VMLexer(self.source)
+        token = lex.next_token()
+        while token is not None:
+            self.tokens.append(token)
+            token = lex.next_token()
+
+    def parse(self):
+        self.instructions = []
+        parse = VMParser(self.tokens)
+        instruction = parse.next_instruction()
+        while instruction is not None:
+            self.instructions.append(instruction)
+            instruction = parse.next_instruction()
+
+    def gen(self):
+        self.code = ""
+        gen = VMCodeGen(self.filename)
+        for instr in self.instructions:
+            self.code += f"// {instr} \n"
+            self.code += gen.gen(instr)
+        
+
+
+if len(argv) < 2:
+    raise Exception("No folder specified")
 
 try:
-    with open(sourcefile) as f:
-        for line in f:
-            source += line
-except FileNotFoundError:
-    print("Source file not found",sourcefile)
-    exit()
+    files = glob(argv[1] + "/*.vm")
+except Exception as error:
+    print(error)
 
-lex = VMLexer(source)
-tokens = []
+output = argv[1] + "/" + os.path.basename(argv[1]) + ".hack"
 
-token = lex.next_token()
-while token is not None:
-    tokens.append(token)
-    token = lex.next_token()
+f = open(output,"w")
 
-parse = VMParser(tokens)
-
-instructions = InstrList([VMInstruction(VMInstructionType.CALL,"Main.main",0,None),VMInstruction(VMInstructionType.LABEL,"HALT",None,None),VMInstruction(VMInstructionType.GOTO,"HALT",None,None)])
-#instructions = InstrList()
-instr = parse.next_instruction()
-while instr is not None:
-    instructions.append(instr)
-    instr = parse.next_instruction()
-
-#print(instructions)
-#exit()
-
-gen = VMCodeGen(filename,instructions)
-
-print(
+f.write( # Bootstrap
 """
 @256
 D=A
 @SP
 M=D
 
+@Sys.init
+0;JMP
 
 """)
-for instr in instructions:
-    print("//",instr)
-    print(gen.gen(instr))
+
+for file in files:
+    f.write(Translator(file).code)
