@@ -17,7 +17,7 @@ class VMCodeGen:
         self.currentFunction = "default"
 
     def gen_function(self,instr): # FUNC = 6 arg1=name arg2=localc
-        return f"({self.filename}.{instr.arg1}) \n @0 \n D=A \n" + VMCodeGen.PUSHD * instr.arg2
+        return f"({instr.arg1}) \n @0 \n D=A \n" + VMCodeGen.PUSHD * instr.arg2
 
     def gen_return(self,instr): # RETURN = 8 no arguments
         return f"{VMCodeGen.POPTOD} \n @13 \n M=D \n @ARG \n D=M \n @14 \n M=D \n @LCL \n D=M \n @SP \n M=D \n {VMCodeGen.POPTOD} \n @THAT \n M=D \n {VMCodeGen.POPTOD} \n @THIS \n M=D \n {VMCodeGen.POPTOD} \n @ARG \n M=D \n {VMCodeGen.POPTOD} \n @LCL \n M=D \n {VMCodeGen.POPTOD} \n @15 \n M=D \n @14 \n D=M \n @SP \n M=D \n @13 \n D=M \n {VMCodeGen.PUSHD} \n @15 \n A=M \n 0;JMP \n"
