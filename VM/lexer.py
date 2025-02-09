@@ -60,13 +60,6 @@ class VMLexer:
             self.chop()
 
     def next_token(self):
-        if self.is_not_empty() and self.peek() == "/":
-            self.chop()
-            if self.peek() == "/":
-                self.dump_line()
-            else:
-                raise Exception("Illegal single slash",self.line)
-
         while self.is_not_empty() and self.peek().isspace():
             if self.chop() == "\n":
                 self.line += 1
@@ -79,5 +72,11 @@ class VMLexer:
             return self.chop_number()
         if self.peek() in string.ascii_letters:
             return self.chop_ident()
+        if self.peek() == "/":
+            self.chop()
+            if self.peek() == "/":
+                self.dump_line()
+                return self.next_token()
+            raise Exception("Illegal single slash",self.line)
         raise Exception("Unknown character",self.peek())
         
