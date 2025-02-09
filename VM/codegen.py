@@ -12,21 +12,27 @@ class VMCodeGen:
     def __init__(self,filename,instructions):
         self.filename = filename
         self.instructions = instructions
+
         self.labelCounter = 0
+        self.currentFunction = "default"
 
     def gen_function(self,instr): # FUNC = 6 arg1=name arg2=localc
-        return f"({instr.arg1}) \n @0 \n D=A \n" + VMCodeGen.PUSHD * instr.arg2
+        return f"({self.filename}.{instr.arg1}) \n @0 \n D=A \n" + VMCodeGen.PUSHD * instr.arg2
 
     def gen_return(self,instr): # RETURN = 8 no arguments
         return f"{VMCodeGen.POPTOD} \n @13 \n M=D \n @ARG \n D=M \n @14 \n M=D \n @LCL \n D=M \n @SP \n M=D \n {VMCodeGen.POPTOD} \n @THAT \n M=D \n {VMCodeGen.POPTOD} \n @THIS \n M=D \n {VMCodeGen.POPTOD} \n @ARG \n M=D \n {VMCodeGen.POPTOD} \n @LCL \n M=D \n {VMCodeGen.POPTOD} \n @15 \n M=D \n @14 \n D=M \n @SP \n M=D \n @13 \n D=M \n {VMCodeGen.PUSHD} \n @15 \n A=M \n 0;JMP \n"
 
     def gen_call(self,instr): # CALL = 7 arg1=name arg2=argc
-        label = self.new_label()
+        label = self.new_return_label()
         return f"@{label} \n D=A \n {VMCodeGen.PUSHD} \n @LCL \n {VMCodeGen.PUSHM} \n @ARG \n {VMCodeGen.PUSHM} \n @THIS \n {VMCodeGen.PUSHM} \n @THAT \n {VMCodeGen.PUSHM} \n @{instr.arg2 + 5} \n D=A \n @SP \n D=M-D \n @ARG \n M=D \n @SP \n D=M \n @LCL \n M=D \n @{instr.arg1} \n 0;JMP \n ({label}) \n"
     
     def new_label(self):
         self.labelCounter += 1
-        return f"{self.filename}.VM$" + str(self.labelCounter)
+        return f"{self.filename}.{self.currentFunction}$" + str(self.labelCounter)
+    
+    def new_return_label(self):
+        self.labelCounter += 1
+        return f"{self.filename}.{self.currentFunction}$ret.{self.labelCounter}"
 
     def gen_constant_push(self,value):
         return f"@{value} \n D=A \n" + VMCodeGen.PUSHD
@@ -49,7 +55,6 @@ class VMCodeGen:
     def gen_static_pop(self,index):
         return VMCodeGen.POPTOD + f"@{self.filename}.{str(index)} \n M=D \n"
     
-
     def gen_push(self,instr): # PUSH = 1 arg1=segment arg2=index
         match instr.arg1:
             case "constant":
@@ -91,10 +96,10 @@ class VMCodeGen:
                 raise Exception("Segment not implemented",instr.arg1)
     
     def gen_label(self,instr): # LABEL = 4 arg1=label
-        return f"({self.filename}.{instr.arg1})\n"
+        return f"({self.filename}.{self.currentFunction}${instr.arg1})\n"
     
     def gen_goto(self,instr): # GOTO = 2 arg1=label
-        return f"@{self.filename}.{instr.arg1} \n 0;JMP \n"
+        return f"@{self.filename}.{self.currentFunction}${instr.arg1} \n 0;JMP \n"
     
     def gen_ifgoto(self,instr): # IFGOTO = 3 arg1=label
         return VMCodeGen.POPTOD + f"@{self.filename}.{instr.arg1} \n D;JNE \n"
@@ -144,6 +149,7 @@ class VMCodeGen:
             case VMInstructionType.ARITH:
                 return self.gen_arith(instr)
             case VMInstructionType.FUNC:
+                self.currentFunction = instr.arg1
                 return self.gen_function(instr)
             case VMInstructionType.RETURN:
                 return self.gen_return(instr)

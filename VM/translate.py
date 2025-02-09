@@ -17,6 +17,7 @@ if len(sys.argv) <= 1:
     exit()
 
 sourcefile = sys.argv[1]
+filename = ".".join(sourcefile.split(".")[:-1])
 source = ""
 
 try:
@@ -47,7 +48,7 @@ while instr is not None:
 #print(instructions)
 #exit()
 
-gen = VMCodeGen(sourcefile,instructions)
+gen = VMCodeGen(filename,instructions)
 
 print(
 """
