@@ -101,7 +101,7 @@ class VMCodeGen:
         return f"@{self.currentFunction}${instr.arg1} \n 0;JMP \n"
     
     def gen_ifgoto(self,instr): # IFGOTO = 3 arg1=label
-        return VMCodeGen.POPTOD + f"@{self.filename}.{instr.arg1} \n D;JNE \n"
+        return VMCodeGen.POPTOD + f"@{self.currentFunction}${instr.arg1} \n D;JNE \n"
 
     def gen_comparison(self,jump):
         trueLabel = self.new_label()
