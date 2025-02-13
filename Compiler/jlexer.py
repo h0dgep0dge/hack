@@ -45,15 +45,17 @@ class TokenType(Enum):
     INTLIT = 40
     STRLIT = 41
     IDENT = 42
-    UNKNOWN = 43
+    KEYWORD = 43
+    UNKNOWN = 44
 
 class Token:
-    def __init__(self,type,source):
+    def __init__(self,type,source,line):
         self.type = type
         self.source = source
+        self.line = line
     
     def __repr__(self):
-        return f"Token( {self.type} , \"{self.source}\" )"
+        return f"Token( {self.type} , \"{self.source}\" , {self.line} )"
 
 class JLexer:
     def __init__(self,source):
@@ -85,20 +87,20 @@ class JLexer:
         while self.is_not_empty() and self.peek() in string.ascii_letters + string.digits + "_":
             self.chop()
         # TODO add some logic to find keywords
-        return Token(TokenType.IDENT,self.source[start:self.ptr])
+        return Token(TokenType.IDENT,self.source[start:self.ptr],self.line)
 
     def chop_intlit(self):
         start = self.ptr
         while self.is_not_empty() and self.peek() in string.digits:
             self.chop()
-        return Token(TokenType.INTLIT,self.source[start:self.ptr])
+        return Token(TokenType.INTLIT,self.source[start:self.ptr],self.line)
 
     def chop_strlit(self):
         start = self.ptr
         self.chop() # Should be ", but what if it isn't? Should I be throwing an error here?
         while self.is_not_empty() and self.chop() != '"':
             pass
-        return Token(TokenType.STRLIT,self.source[start:self.ptr])
+        return Token(TokenType.STRLIT,self.source[start:self.ptr],self.line)
     
     def chop_line(self):
         while self.is_not_empty() and self.chop() != "\n":
@@ -118,29 +120,29 @@ class JLexer:
         
         match c:
             case "{":
-                return Token(TokenType.LBRACE,self.chop())
+                return Token(TokenType.LBRACE,self.chop(),self.line)
             case "}":
-                return Token(TokenType.RBRACE,self.chop())
+                return Token(TokenType.RBRACE,self.chop(),self.line)
             case "(":
-                return Token(TokenType.LPAREN,self.chop())
+                return Token(TokenType.LPAREN,self.chop(),self.line)
             case ")":
-                return Token(TokenType.RPAREN,self.chop())
+                return Token(TokenType.RPAREN,self.chop(),self.line)
             case "[":
-                return Token(TokenType.LBRACK,self.chop())
+                return Token(TokenType.LBRACK,self.chop(),self.line)
             case "]":
-                return Token(TokenType.RBRACK,self.chop())
+                return Token(TokenType.RBRACK,self.chop(),self.line)
             case ".":
-                return Token(TokenType.DOT,self.chop())
+                return Token(TokenType.DOT,self.chop(),self.line)
             case ",":
-                return Token(TokenType.COMMA,self.chop())
+                return Token(TokenType.COMMA,self.chop(),self.line)
             case ";":
-                return Token(TokenType.SEMIC,self.chop())
+                return Token(TokenType.SEMIC,self.chop(),self.line)
             case "+":
-                return Token(TokenType.PLUS,self.chop())
+                return Token(TokenType.PLUS,self.chop(),self.line)
             case "-":
-                return Token(TokenType.MINUS,self.chop())
+                return Token(TokenType.MINUS,self.chop(),self.line)
             case "*":
-                return Token(TokenType.STAR,self.chop())
+                return Token(TokenType.STAR,self.chop(),self.line)
             case "/":
 
                 if self.peek(1) == "/":
@@ -149,23 +151,23 @@ class JLexer:
                 if self.peek(1) == "*":
                     self.chop_comment()
                     return self.next_token()
-                return Token(TokenType.SLASH,self.chop())
+                return Token(TokenType.SLASH,self.chop(),self.line)
             case "&":
-                return Token(TokenType.AMPER,self.chop())
+                return Token(TokenType.AMPER,self.chop(),self.line)
             case "|":
-                return Token(TokenType.PIPE,self.chop())
+                return Token(TokenType.PIPE,self.chop(),self.line)
             case "<":
-                return Token(TokenType.LTHAN,self.chop())
+                return Token(TokenType.LTHAN,self.chop(),self.line)
             case ">":
-                return Token(TokenType.GTHAN,self.chop())
+                return Token(TokenType.GTHAN,self.chop(),self.line)
             case "=":
-                return Token(TokenType.EQUAL,self.chop())
+                return Token(TokenType.EQUAL,self.chop(),self.line)
             case "~":
-                return Token(TokenType.TILDE,self.chop())
+                return Token(TokenType.TILDE,self.chop(),self.line)
             case '"':
                 return self.chop_strlit()
         if c in string.digits:
             return self.chop_intlit()
         if c == "_" or c in string.ascii_letters:
             return self.chop_ident()
-        return Token(TokenType.UNKNOWN,self.chop())
+        return Token(TokenType.UNKNOWN,self.chop(),self.line)
