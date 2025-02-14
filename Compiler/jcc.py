@@ -49,18 +49,17 @@ def Evaluate(expr):
     elif isinstance(expr,LitTerm):
         return int(expr.token.source)
 
+if __name__ == "__main__":
+    if len(argv) < 2:
+        raise Exception("No folder specified")
 
+    try:
+        files = glob(argv[1] + "/*.jack")
+    except Exception as error:
+        print(error)
+        exit()
 
-if len(argv) < 2:
-    raise Exception("No folder specified")
-
-try:
-    files = glob(argv[1] + "/*.jack")
-except Exception as error:
-    print(error)
-    exit()
-
-for file in files:
-    c = Compiler(file)
-    print(c.ast)
-    #print(Evaluate(c.ast))
+    for file in files:
+        c = Compiler(file)
+        print(c.ast)
+        #print(Evaluate(c.ast))
