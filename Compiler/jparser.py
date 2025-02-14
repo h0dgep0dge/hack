@@ -5,23 +5,20 @@ class LitTerm:
         self.token = token
     
     def __repr__(self):
-        return f"LitTerm( {repr(self.token)} )"
-
-class OpTerm:
-    def __init__(self,op,term):
-        self.op = op
-        self.term = term
-    
-    def __repr__(self):
-        return f"OpTerm( {self.op} , {self.term})"
+        #return f"LitTerm( {repr(self.token)} )"
+        return self.token.source
 
 class Expression:
-    def __init__(self,term,opterm=None):
+    def __init__(self,term,opterms):
         self.term = term
-        self.opterm = opterm
+        self.opterms = opterms
     
     def __repr__(self):
-        return f"Expression( {self.term} , {self.opterm})"
+        #return f"Expression( {self.term} , {self.opterms} )"
+        r = repr(self.term)
+        for opterm in self.opterms:
+            r += opterm[0].source + repr(opterm[1])
+        return f"({r})"
 
 class SubscriptTerm:
     def __init__(self,varName,indexExpr):
@@ -29,7 +26,7 @@ class SubscriptTerm:
         self.indexExpr = indexExpr
     
     def __repr__(self):
-        return f"SubscriptTerm( {self.varName} , {self.indexExpr})"
+        return f"SubscriptTerm( {self.varName} , {self.indexExpr} )"
 
 class UnaryTerm:
     def __init__(self,op,term):
@@ -37,7 +34,7 @@ class UnaryTerm:
         self.term = term
     
     def __repr__(self):
-        return f"UnaryTerm( {self.op} , {self.term})"
+        return f"UnaryTerm( {self.op} , {self.term} )"
 
 class SubCall:
     def __init__(self,that,name,exprList):
@@ -46,9 +43,11 @@ class SubCall:
         self.exprList = exprList
     
     def __repr__(self):
-        return f"OpTerm( {self.that} , {self.name} , {self.exprList})"
+        return f"OpTerm( {self.that} , {self.name} , {self.exprList} )"
 
-BinaryOperators = [TokenType.PLUS,TokenType.MINUS,TokenType.STAR,TokenType.SLASH,TokenType.AMPER,TokenType.PIPE,TokenType.LTHAN,TokenType.GTHAN,TokenType.EQUAL]
+BinaryOperators = [TokenType.PLUS,  TokenType.MINUS, TokenType.STAR,
+                   TokenType.SLASH, TokenType.AMPER, TokenType.PIPE,
+                   TokenType.LTHAN, TokenType.GTHAN, TokenType.EQUAL]
 UnaryOperators = [TokenType.MINUS,TokenType.TILDE]
 
 class JParser:
@@ -84,10 +83,12 @@ class JParser:
 
     def chop_expression(self):
         term = self.chop_term()
-        opTerm = None
-        if self.is_not_empty() and self.peek().type in BinaryOperators:
-            opTerm = self.chop_opterm()
-        return Expression(term,opTerm)
+        opterms = []
+        while self.is_not_empty() and self.peek().type in BinaryOperators:
+            op = self.chop()
+            subterm = self.chop_term()
+            opterms.append((op,subterm))
+        return Expression(term,opterms)
     
     def chop_subscript(self):
         ident = self.expect(TokenType.IDENT)
@@ -141,8 +142,3 @@ class JParser:
                 return LitTerm(self.chop())
             case TokenType.LPAREN:
                 return self.chop_parenthetical()
-    
-    def chop_opterm(self):
-        if self.peek().type not in BinaryOperators:
-            raise Exception("Unexpected token",self.peek())
-        return OpTerm(self.chop(),self.chop_term())

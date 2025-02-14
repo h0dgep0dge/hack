@@ -34,15 +34,18 @@ class Compiler:
 
 def Evaluate(expr):
     if isinstance(expr,Expression):
-        lterm = Evaluate(expr.term)
-        if expr.opterm is not None:
-            rterm = Evaluate(expr.opterm.term)
-            match expr.opterm.op.type:
+        value = Evaluate(expr.term)
+        for opterm in expr.opterms:
+            match opterm[0].type:
                 case TokenType.PLUS:
-                    return lterm + rterm
+                    value = value + Evaluate(opterm[1])
                 case TokenType.MINUS:
-                    return lterm - rterm
-        return lterm
+                    value = value - Evaluate(opterm[1])
+                case TokenType.STAR:
+                    value = value * Evaluate(opterm[1])
+                case TokenType.SLASH:
+                    value = value / Evaluate(opterm[1])
+        return value
     elif isinstance(expr,LitTerm):
         return int(expr.token.source)
 
