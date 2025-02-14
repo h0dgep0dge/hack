@@ -19,7 +19,7 @@ class JParser:
     
     def peek(self,offset=0):
         if self.ptr+offset >= len(self.tokens):
-            return None
+            raise Exception("Unexpected end of file")
         return self.tokens[self.ptr+offset]
 
     def chop(self):
@@ -98,3 +98,22 @@ class JParser:
                 return LitTerm(self.chop())
             case TokenType.LPAREN:
                 return self.chop_parenthetical()
+    
+    def chop_class(self):
+        self.expect(TokenType.CLASS)
+        className = self.expect(TokenType.IDENT)
+        self.expect(TokenType.LBRACE)
+        varDecList = []
+        subroutineDecList = []
+        while self.peek().type is TokenType.STATIC or \
+              self.peek().type is TokenType.FIELD:
+            varDecList.append(self.chop_classVarDec())
+        while self.peek().type is not TokenType.RBRACE:
+            subroutineDecList.append(self.chop_subroutineDec)
+        self.expect(TokenType.RBRACE)
+        return JClass(className,varDecList,subroutineDecList)
+
+    def chop_classVarDec(self):
+        pass
+
+        

@@ -30,7 +30,7 @@ class Compiler:
     
     def parse(self):
         parser = JParser(self.tokens)
-        self.ast = parser.chop_expression()
+        self.ast = parser.chop_class()
 
 def Evaluate(expr):
     if isinstance(expr,Expression):
@@ -63,4 +63,4 @@ except Exception as error:
 for file in files:
     c = Compiler(file)
     print(c.ast)
-    print(Evaluate(c.ast))
+    #print(Evaluate(c.ast))
