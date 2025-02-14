@@ -49,6 +49,8 @@ class TokenType(Enum):
     UNKNOWN = 44
 
 class Token:
+    KEYWORDS = {"class":TokenType.CLASS,"constructor":TokenType.CONSTR,"function":TokenType.FUNC,"method":TokenType.METH,"field":TokenType.FIELD,"static":TokenType.STATIC,"var":TokenType.VAR,"int":TokenType.INT,"char":TokenType.CHAR,"boolean":TokenType.BOOL,"void":TokenType.VOID,"true":TokenType.TRUE,"false":TokenType.FALSE,"null":TokenType.NULL,"this":TokenType.THIS,"let":TokenType.LET,"do":TokenType.DO,"if":TokenType.IF,"else":TokenType.ELSE,"while":TokenType.WHILE,"return":TokenType.RETURN}
+
     def __init__(self,type,source,line):
         self.type = type
         self.source = source
@@ -86,8 +88,12 @@ class JLexer:
         start = self.ptr
         while self.is_not_empty() and self.peek() in string.ascii_letters + string.digits + "_":
             self.chop()
-        # TODO add some logic to find keywords
-        return Token(TokenType.IDENT,self.source[start:self.ptr],self.line)
+        source = self.source[start:self.ptr]
+        if source in Token.KEYWORDS:
+            tokentype = Token.KEYWORDS[source]
+        else:
+            tokentype = TokenType.IDENT
+        return Token(tokentype,source,self.line)
 
     def chop_intlit(self):
         start = self.ptr
