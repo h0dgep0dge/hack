@@ -1,49 +1,5 @@
 from jlexer import TokenType
-
-class LitTerm:
-    def __init__(self,token):
-        self.token = token
-    
-    def __repr__(self):
-        #return f"LitTerm( {repr(self.token)} )"
-        return self.token.source
-
-class Expression:
-    def __init__(self,term,opterms):
-        self.term = term
-        self.opterms = opterms
-    
-    def __repr__(self):
-        #return f"Expression( {self.term} , {self.opterms} )"
-        r = repr(self.term)
-        for opterm in self.opterms:
-            r += opterm[0].source + repr(opterm[1])
-        return f"({r})"
-
-class SubscriptTerm:
-    def __init__(self,varName,indexExpr):
-        self.varName = varName
-        self.indexExpr = indexExpr
-    
-    def __repr__(self):
-        return f"SubscriptTerm( {self.varName} , {self.indexExpr} )"
-
-class UnaryTerm:
-    def __init__(self,op,term):
-        self.op = op
-        self.term = term
-    
-    def __repr__(self):
-        return f"UnaryTerm( {self.op} , {self.term} )"
-
-class SubCall:
-    def __init__(self,that,name,exprList):
-        self.that = that
-        self.name = name
-        self.exprList = exprList
-    
-    def __repr__(self):
-        return f"OpTerm( {self.that} , {self.name} , {self.exprList} )"
+from progclasses import *
 
 BinaryOperators = [TokenType.PLUS,  TokenType.MINUS, TokenType.STAR,
                    TokenType.SLASH, TokenType.AMPER, TokenType.PIPE,
