@@ -57,6 +57,7 @@ class JParser:
         return SubscriptTerm(ident,index)
 
     def chop_subroutine(self):
+        print(f"Chopping subroutine call at {self.tokens[self.ptr]}")
         subroutineName = None
         className = None
         first = self.expect(TokenType.IDENT)
@@ -96,7 +97,7 @@ class JParser:
             case TokenType.IDENT:
                 if self.peek(1).type is TokenType.LBRACK:
                     return self.chop_subscript()
-                if self.peek(1).type is TokenType.LPAREN:
+                if self.peek(1).type is TokenType.LPAREN or self.peek(1).type is TokenType.DOT:
                     return self.chop_subroutine()
                 return LitTerm(self.chop())
             case TokenType.LPAREN:
@@ -177,7 +178,9 @@ class JParser:
         varName = self.expect(TokenType.IDENT)
         index = None
         if self.peek().type is TokenType.LBRACK:
+            self.expect(TokenType.LBRACK)
             index = self.chop_expression()
+            self.expect(TokenType.RBRACK)
         self.expect(TokenType.EQUAL)
         expr = self.chop_expression()
         self.expect(TokenType.SEMIC)

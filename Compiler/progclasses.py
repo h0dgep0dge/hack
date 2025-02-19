@@ -1,18 +1,27 @@
+from astprint import ASTPrettyPrint as ASTPrint
+
+class AST:
+    def __repr__(self):
+        return ASTPrint.visit(self)
+    
+    def accept(self,visitor):
+        return getattr(visitor,type(self).__name__)(self)
+
 # Program Structure
 
-class JClass:
+class JClass(AST):
     def __init__(self,className,classVarDecList,subroutineDecList):
         self.className = className
         self.classVarDecList = classVarDecList
         self.subroutineDecList = subroutineDecList
 
-class ClassVarDec:
+class ClassVarDec(AST):
     def __init__(self,scope,datatype,varNameList):
         self.scope = scope
         self.datatype = datatype
         self.varNameList = varNameList
 
-class SubroutineDec:
+class SubroutineDec(AST):
     def __init__(self,funcType,datatype,subroutineName,parameterList,subroutineBody):
         self.funcType = funcType
         self.datatype = datatype
@@ -20,92 +29,72 @@ class SubroutineDec:
         self.parameterList = parameterList
         self.subroutineBody = subroutineBody
 
-class Parameter:
+class Parameter(AST):
     def __init__(self,datatype,varName):
         self.datatype = datatype
         self.varName = varName
 
-class SubroutineBody:
+class SubroutineBody(AST):
     def __init__(self,varDecList,statementList):
         self.varDecList = varDecList
         self.statementList = statementList
 
-class VarDec:
+class VarDec(AST):
     def __init__(self,datatype,varNameList):
         self.datatype = datatype
         self.varNameList = varNameList
 
 # Statements
 
-class LetStatement:
+class LetStatement(AST):
     def __init__(self,varName,expression):
         self.varName = varName
         self.expression = expression
 
-class SubscriptLetStatement:
+class SubscriptLetStatement(AST):
     def __init__(self,varName,index,expression):
         self.varName = varName
         self.index = index
         self.expression = expression
 
-class IfStatement:
+class IfStatement(AST):
     def __init__(self,condition,statementList,elseStatementList):
         self.condition = condition
         self.statementList = statementList
         self.elseStatementList = elseStatementList
 
-class WhileStatement:
+class WhileStatement(AST):
     def __init__(self,condition,statementList):
         self.condition = condition
         self.statementList = statementList
 
-class ReturnStatement:
+class ReturnStatement(AST):
     def __init__(self,expression):
         self.expression = expression
 
 # Expressions
 
-class LitTerm:
+class LitTerm(AST):
     def __init__(self,token):
         self.token = token
-    
-    def __repr__(self):
-        return f"LitTerm( {repr(self.token)} )"
-        return self.token.source
 
-class Expression:
-    def __init__(self,term,opterms):
-        self.term = term
-        self.opterms = opterms
-    
-    def __repr__(self):
-        return f"Expression( {self.term} , {self.opterms} )"
-        r = repr(self.term)
-        for opterm in self.opterms:
-            r += opterm[0].source + repr(opterm[1])
-        return f"({r})"
-
-class SubscriptTerm:
+class SubscriptTerm(AST):
     def __init__(self,varName,indexExpr):
         self.varName = varName
         self.indexExpr = indexExpr
-    
-    def __repr__(self):
-        return f"SubscriptTerm( {self.varName} , {self.indexExpr} )"
 
-class UnaryTerm:
+class UnaryTerm(AST):
     def __init__(self,op,term):
         self.op = op
         self.term = term
-    
-    def __repr__(self):
-        return f"UnaryTerm( {self.op} , {self.term} )"
 
-class SubCall:
+class SubCall(AST):
     def __init__(self,that,name,exprList):
         self.that = that
         self.name = name
         self.exprList = exprList
-    
-    def __repr__(self):
-        return f"OpTerm( {self.that} , {self.name} , {self.exprList} )"
+
+class Expression(AST):
+    def __init__(self,term,opterms):
+        self.term = term
+        self.opterms = opterms
