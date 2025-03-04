@@ -10,8 +10,9 @@ SubroutineDatatypes = [TokenType.INT,TokenType.CHAR,TokenType.BOOL,TokenType.VOI
 
 def printer(func):
     def wrapper_func(self):
-        print(func.__name__)
+        print("calling",func.__name__)
         func(self)
+        print("leaving",func.__name__)
     return wrapper_func
 
 class JParser:
@@ -33,38 +34,41 @@ class JParser:
     def chop(self):
         r = self.peek()
         self.ptr += 1
+        print("chopping",r)
         return r
 
     def expect(self,*args):
+        print("expecting",args)
         if self.is_empty():
             raise Exception("Unexpected end of file")
         if self.peek().type in args:
             return self.chop()
-        raise Exception("Unexpected token",self.peek())
+        raise Exception("Unexpected token",self.peek(),args)
 
     @printer
     def jclass(self):
         self.expect(TokenType.CLASS)
         self.expect(TokenType.IDENT)
         self.expect(TokenType.LBRACE)
-        self.classVarDecs()
-        self.subroutineDecs()
+        while self.peek().type is TokenType.STATIC or \
+              self.peek().type is TokenType.FIELD:
+            self.classVarDec()
+        while self.peek().type is not TokenType.RBRACE:
+            self.subroutineDec()
         self.expect(TokenType.RBRACE)
 
     @printer
-    def classVarDecs(self):
-        while self.peek().type is TokenType.STATIC or \
-              self.peek().type is TokenType.FIELD:
-            self.expect(TokenType.STATIC,TokenType.FIELD)
-            self.expect(*VarDatatypes)
+    def classVarDec(self):
+        self.expect(TokenType.STATIC,TokenType.FIELD)
+        self.expect(*VarDatatypes)
+        self.expect(TokenType.IDENT)
+        while self.peek().type is TokenType.COMMA:
+            self.expect(TokenType.COMMA)
             self.expect(TokenType.IDENT)
-            while self.peek().type is TokenType.COMMA:
-                self.expect(TokenType.COMMA)
-                self.expect(TokenType.IDENT)
-            self.expect(TokenType.SEMIC)
+        self.expect(TokenType.SEMIC)
     
     @printer
-    def subroutineDecs(self):
+    def subroutineDec(self):
         self.expect(TokenType.CONSTR,TokenType.FUNC,TokenType.METH)
         self.expect(*SubroutineDatatypes)
         self.expect(TokenType.IDENT)
